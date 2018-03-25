@@ -1,0 +1,7 @@
+<h1>{{title}}</h1>
+
+<div id="newsall">
+  {{#each news}}
+      <img src="{{this.image}}"><p>{{@index}}. <a href="{{this.ahref}}">{{this.title}}</a>, Дата новости: <b>{{this.date}}</b></p>
+  {{/each}}
+</div>
