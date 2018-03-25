@@ -6,6 +6,7 @@ const templating = require('consolidate');
 const bodyParser = require('body-parser');
 const reqnews = require('request');
 const cheerio = require('cheerio');
+const cookieParser = require('cookie-parser');
 const app = express();
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 
@@ -14,12 +15,14 @@ app.set('view engine', 'hbs');
 app.set('views', __dirname + '/templates');
 
 app.use(express.static(__dirname + '/public'));
+app.use(cookieParser());
 
 app.post('/newslist', urlencodedParser, (req, res) => {
     if(!req.body) return res.sendStatus(400);
       console.log(req.body);
       const typenews = req.body.typenews;
       let countn = req.body.countnews;
+      res.setHeader('Set-Cookie','type_n='+typenews+'||'+countn);
       reqnews('https://ria.ru/'+typenews+'/', (error, response, html) => {
         let newsall = [[],[],[],[]];
         let newseach = [];
@@ -55,7 +58,10 @@ app.post('/newslist', urlencodedParser, (req, res) => {
 });
 
 app.get('/', (request, response) => { 
-    response.redirect('/formnews.html');
+    const paramsn = request.cookies['type_n'].split('||');
+    response.redirect('/formnews.html?typenews='+paramsn[0]+'&countnews='+paramsn[1]);
+    console.log('************************');
+    console.log(request.cookies['type_n']);
 });
 
 app.listen(7777);
