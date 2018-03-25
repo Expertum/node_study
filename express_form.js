@@ -59,9 +59,15 @@ app.post('/newslist', urlencodedParser, (req, res) => {
 
 app.get('/', (request, response) => { 
     const paramsn = request.cookies['type_n'].split('||');
-    response.redirect('/formnews.html?typenews='+paramsn[0]+'&countnews='+paramsn[1]);
-    console.log('************************');
-    console.log(request.cookies['type_n']);
+    if (paramsn.length != 0) {
+        response.redirect('/formnews.html?typenews='+paramsn[0]+'&countnews='+paramsn[1]);
+        console.log('************************');
+        console.log(request.cookies['type_n']);
+    } else{
+        response.redirect('/formnews.html');
+        console.log('************************');
+        console.log('no cookies');
+    }
 });
 
 app.listen(7777);
