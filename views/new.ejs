@@ -1,0 +1,20 @@
+<! DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8"/>
+	<title>Task New</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="css/aplication.css" />
+</head>
+<body>
+        <h2> <%= title %></h2>
+        <form action="/createtask" method="post">
+            <label>Name:</label>
+            <input type="text" name="newname"/><br/><br/>
+            <label>Text:</label>
+            <input type="text" name="newtext"/>
+<br/><br/>
+            <input type="submit" value="Submit" />
+        </form>
+</body>
+</html>

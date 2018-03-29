@@ -1,0 +1,43 @@
+{
+  "name": "node_study",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^2.6.0",
+    "body-parser": "^1.18.2",
+    "chalk": "^2.3.2",
+    "cheerio": "^1.0.0-rc.2",
+    "connect-mongo": "^2.0.1",
+    "consolidate": "^0.15.1",
+    "cookie-parser": "^1.4.3",
+    "ejs-locals": "^1.0.2",
+    "express": "^4.16.3",
+    "handlebars": "^4.0.11",
+    "jslint": "^0.12.0",
+    "mongodb": "^3.0.5",
+    "mongoose": "^5.0.12",
+    "nconf": "^0.10.0",
+    "node-uuid": "^1.4.8",
+    "request": "^2.85.0",
+    "string": "^3.3.3",
+    "validator": "^9.4.1",
+    "winston": "^2.4.1"
+  },
+  "devDependencies": {
+    "eslint-config-google": "^0.9.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Expertum/node_study.git"
+  },
+  "author": "Artem",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Expertum/node_study/issues"
+  },
+  "homepage": "https://github.com/Expertum/node_study#readme"
+}
