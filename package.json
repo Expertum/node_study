@@ -12,6 +12,7 @@
     "consolidate": "^0.15.1",
     "cookie-parser": "^1.4.3",
     "ejs-locals": "^1.0.2",
+    "eslint": "^4.19.1",
     "express": "^4.16.3",
     "handlebars": "^4.0.11",
     "jslint": "^0.12.0",
