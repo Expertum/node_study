@@ -17,6 +17,7 @@ db.once('open', () => {});
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(urlencodedParser);
 
 const LocalStrategy = require('passport-local').Strategy;
 passport.use(new LocalStrategy((username, password, done) => {
@@ -61,6 +62,7 @@ const mustBeAuthenticated = (req, res, next) => {
             }
         });
     });
+
     app.get('/', (request, response) => { 
         const title = 'List of Tasks'
         console.log('List Tasks ...');
