@@ -20,6 +20,8 @@
     "mongoose": "^5.0.12",
     "nconf": "^0.10.0",
     "node-uuid": "^1.4.8",
+    "passport": "^0.4.0",
+    "passport-local": "^1.0.0",
     "request": "^2.85.0",
     "string": "^3.3.3",
     "validator": "^9.4.1",

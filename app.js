@@ -5,14 +5,62 @@ const bodyParser = require('body-parser');
 const urlencodedParser = bodyParser.urlencoded({extended: false});
 const middleware = require('./middleware')(app, express);
 const config = require('./config');
+const passport = require('passport');
 
 Task = require('./models/tasks');
+User = require('./models/users');
 
 mongoose.connect(config.mongoUri);
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', () => {});
 
+app.use(passport.initialize());
+app.use(passport.session());
+
+const LocalStrategy = require('passport-local').Strategy;
+passport.use(new LocalStrategy((username, password, done) => {
+    console.log('Strategy...');
+    User.findOne({ username }).then((user) => {
+        if(user) {
+            console.log('User find!');
+            if (user.password === password) {
+                done(null, user);
+            } else {
+                done(null, false);  
+            }
+        } else {
+            console.log('User not find!');
+            done(null, false);
+        }
+    })
+}));
+
+const authHandler = passport.authenticate('local', {
+    successRedirect: '/',
+    failureRedirect: '/login'
+});
+
+const mustBeAuthenticated = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+};
+
+    app.post('/login', authHandler);
+    
+    app.get('/login', (req, resp) => {
+        User.count().then((user) => {
+            console.log('User count => %s', user);
+            if (user != 0) {
+                resp.render('login');
+            } else {
+                resp.render('newuser');
+            }
+        });
+    });
     app.get('/', (request, response) => { 
         const title = 'List of Tasks'
         console.log('List Tasks ...');
@@ -24,7 +72,7 @@ db.once('open', () => {});
        });
     });
     
-    app.get('/edittask', (req, res) => {
+    app.get('/edittask', mustBeAuthenticated, (req, res) => {
         const { name } = req.query;
         console.log('Edit Task => ', name);
         const title = 'Edit Task by name: ' + name;
@@ -56,10 +104,19 @@ db.once('open', () => {});
         });
     });
 
-    app.post('/createtask', urlencodedParser, (req, res) => {
+    app.post('/createtask', mustBeAuthenticated, urlencodedParser, (req, res) => {
         const { 'newname': name, 'newtext': text} = req.body;
         var task = new Task({ name: name, text:text });
         task.save( (err) => {
+            if (err) return handleError(err);
+            res.redirect('/');
+          })
+    });
+
+    app.post('/createuser', urlencodedParser, (req, res) => {
+        const { 'username': name, 'password': password} = req.body;
+        var user = new User({ name: name, password:password });
+        user.save( (err) => {
             if (err) return handleError(err);
             res.redirect('/');
           })
