@@ -6,9 +6,10 @@ const urlencodedParser = bodyParser.urlencoded({extended: false});
 const middleware = require('./middleware')(app, express);
 const config = require('./config');
 const passport = require('passport');
+const session = require('express-session');
 
-Task = require('./models/tasks');
-User = require('./models/users');
+const Task = require('./models/tasks');
+const User = require('./models/users');
 
 mongoose.connect(config.mongoUri);
 const db = mongoose.connection;
@@ -18,13 +19,18 @@ db.once('open', () => {});
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(urlencodedParser);
+app.use(session({
+    secret: 'secrettexthere',
+    saveUninitialized: true,
+    resave: true
+}));
 
 const LocalStrategy = require('passport-local').Strategy;
 passport.use(new LocalStrategy((username, password, done) => {
     console.log('Strategy...');
-    User.findOne({ username }).then((user) => {
-        if(user) {
-            console.log('User find!');
+    User.findOne({ 'name':username }).then((user) => {
+        if (user) {
+            console.log('User find!', user._id);
             if (user.password === password) {
                 done(null, user);
             } else {
@@ -37,13 +43,26 @@ passport.use(new LocalStrategy((username, password, done) => {
     })
 }));
 
+passport.serializeUser((user, done) => {
+    console.log('serializeUser !');
+    done(null, user._id);
+});
+
+passport.deserializeUser((id, done) => {
+    console.log('deserializeUser !');
+    User.findById(id).then((user) => {
+        done(null, user);
+    });
+});
+
 const authHandler = passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/login'
 });
 
 const mustBeAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {
+    const isAuthenticated = req.session.passport;
+    if (typeof isAuthenticated !== 'undefined' && isAuthenticated) {
         next();
     } else {
         res.redirect('/login');
@@ -53,9 +72,9 @@ const mustBeAuthenticated = (req, res, next) => {
     app.post('/login', authHandler);
     
     app.get('/login', (req, resp) => {
-        User.count().then((user) => {
-            console.log('User count => %s', user);
-            if (user != 0) {
+        User.count().then((userCount) => {
+            console.log('User count => %s', userCount);
+            if (userCount != 0) {
                 resp.render('login');
             } else {
                 resp.render('newuser');
@@ -63,7 +82,13 @@ const mustBeAuthenticated = (req, res, next) => {
         });
     });
 
-    app.get('/', (request, response) => { 
+    app.get('/logout', (req, res) => {
+      req.logout();
+      res.redirect('/');
+    });
+
+    app.get('/', mustBeAuthenticated, (request, response) => { 
+        //console.log('search user...', request.session.passport);
         const title = 'List of Tasks'
         console.log('List Tasks ...');
         Task.find().then((listTask) => {
@@ -86,7 +111,7 @@ const mustBeAuthenticated = (req, res, next) => {
         });            
     });
 
-    app.post('/savechanged', urlencodedParser, (req, res) => {
+    app.post('/savechanged', (req, res) => {
         const { id, 'editname': name, 'edittext': text } = req.body;
         console.log('Save changed to => ', name);
         Task.findById(id, (err, doc) => {
@@ -98,7 +123,7 @@ const mustBeAuthenticated = (req, res, next) => {
         });
     });
 
-    app.get('/newtask', (req, res) => {
+    app.get('/newtask', mustBeAuthenticated, (req, res) => {
         console.log('Add new task!');
         const title = 'Add new task:';
         res.render('new', {
@@ -106,7 +131,7 @@ const mustBeAuthenticated = (req, res, next) => {
         });
     });
 
-    app.post('/createtask', mustBeAuthenticated, urlencodedParser, (req, res) => {
+    app.post('/createtask', (req, res) => {
         const { 'newname': name, 'newtext': text} = req.body;
         var task = new Task({ name: name, text:text });
         task.save( (err) => {
@@ -115,7 +140,7 @@ const mustBeAuthenticated = (req, res, next) => {
           })
     });
 
-    app.post('/createuser', urlencodedParser, (req, res) => {
+    app.post('/createuser', (req, res) => {
         const { 'username': name, 'password': password} = req.body;
         var user = new User({ name: name, password:password });
         user.save( (err) => {
@@ -124,10 +149,11 @@ const mustBeAuthenticated = (req, res, next) => {
           })
     });
 
-    app.get('/deletetask', (req, res) => {
+    app.get('/deletetask', mustBeAuthenticated, (req, res) => {
         const { id, name } = req.query;
         console.log('Delete Task => ',name);
         Task.remove({ _id: id }).then(() => res.redirect('/'));         
     });
 
     app.listen(config.port);
+    console.log(cookieParser);
