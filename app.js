@@ -8,6 +8,9 @@ const config = require('./config');
 const passport = require('passport');
 const session = require('express-session');
 
+var jwt = require ('jsonwebtoken'); 
+var bcrypt = require ('bcryptjs'); 
+
 const Task = require('./models/tasks');
 const User = require('./models/users');
 
@@ -18,7 +21,10 @@ db.once('open', () => {});
 
 app.use(passport.initialize());
 app.use(passport.session());
+
 app.use(urlencodedParser);
+app.use(bodyParser.json());
+
 app.use(session({
     secret: 'secrettexthere',
     saveUninitialized: true,
@@ -31,11 +37,14 @@ passport.use(new LocalStrategy((username, password, done) => {
     User.findOne({ 'name':username }).then((user) => {
         if (user) {
             console.log('User find!', user._id);
-            if (user.password === password) {
-                done(null, user);
-            } else {
-                done(null, false);  
-            }
+            bcrypt.compare(password, user.password, (err, res) => {
+                console.log('res decrypt =>',res);
+                if (res) {
+                    done(null, user);
+                } else {
+                    done(null, false);  
+                }
+            });
         } else {
             console.log('User not find!');
             done(null, false);
@@ -62,8 +71,18 @@ const authHandler = passport.authenticate('local', {
 
 const mustBeAuthenticated = (req, res, next) => {
     const isAuthenticated = req.session.passport;
+    const tokenEx = req.cookies.auth;
     if (typeof isAuthenticated !== 'undefined' && isAuthenticated) {
-        next();
+        if (tokenEx) {
+            next();
+        } else {
+            const token = jwt.sign({id: isAuthenticated['user']}, config.secret,{
+                expiresIn: 86400 // истекает через 24 часа 
+            });
+            res.cookie('auth',token);
+            console.log('Added token =>', token);
+            res.redirect('/login');
+        }
     } else {
         res.redirect('/login');
     }
@@ -88,7 +107,6 @@ const mustBeAuthenticated = (req, res, next) => {
     });
 
     app.get('/', mustBeAuthenticated, (request, response) => { 
-        //console.log('search user...', request.session.passport);
         const title = 'List of Tasks'
         console.log('List Tasks ...');
         Task.find().then((listTask) => {
@@ -140,14 +158,31 @@ const mustBeAuthenticated = (req, res, next) => {
           })
     });
 
+    app.get('/newuser', mustBeAuthenticated, (req, res) => {
+        res.render('newuser');
+    });
+
     app.post('/createuser', (req, res) => {
-        const { 'username': name, 'password': password} = req.body;
-        var user = new User({ name: name, password:password });
+        const hashedPassword = bcrypt.hashSync(req.body.password, 8);
+        const { 'username': name} = req.body;
+
+        const user = new User({ name: name, password:hashedPassword });
         user.save( (err) => {
             if (err) return handleError(err);
+            console.log('User create!');
             res.redirect('/');
           })
     });
+
+    app.get('/me', mustBeAuthenticated, (req, res) => {
+        const token = req.cookies.auth;
+        if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
+        
+        jwt.verify(token, config.secret, (err, decoded) => {
+          if (err) return res.status(500).send({ auth: false, message: 'Failed to authenticate token.' });   
+          res.status(200).send(decoded);
+        });
+      });
 
     app.get('/deletetask', mustBeAuthenticated, (req, res) => {
         const { id, name } = req.query;
@@ -156,4 +191,3 @@ const mustBeAuthenticated = (req, res, next) => {
     });
 
     app.listen(config.port);
-    console.log(cookieParser);
