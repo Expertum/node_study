@@ -10,8 +10,8 @@ exports.listAlltasks = (req, res) => {
 };
 
 exports.createAtask = (req, res) => {
-const new_task = new Task(req.body);
-  new_task.save((err, task) => {
+const newTask = new Task(req.body);
+  newTask.save((err, task) => {
     if (err)
       res.send(err);
     res.json(task);

@@ -175,6 +175,7 @@ const mustBeAuthenticated = (req, res, next) => {
     });
 
     app.get('/me', mustBeAuthenticated, (req, res) => {
+        console.log('user =>', req.user);
         const token = req.cookies.auth;
         if (!token) return res.status(401).send({ auth: false, message: 'No token provided.' });
         
@@ -184,6 +185,7 @@ const mustBeAuthenticated = (req, res, next) => {
         });
       });
 
+      
     app.get('/deletetask', mustBeAuthenticated, (req, res) => {
         const { id, name } = req.query;
         console.log('Delete Task => ',name);
